@@ -19,8 +19,13 @@ func s3Handler(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 
 	command := PresignInput{
-		mimetype:  r.FormValue("mimetype"),
-		directory: r.FormValue("directory")}
+		mime: r.FormValue("mime"),
+		key:  r.FormValue("key"),
+	}
+
+	if len(command.mime) < 1 {
+		io.WriteString(w, "param missing: mime")
+	}
 	fmt.Print(command)
 
 	url, err := Presign(&command)
@@ -38,29 +43,13 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 	svc := s3.New(ses)
 
-	result, err := svc.ListBuckets(nil)
-	if err != nil {
-	}
+	res, _ := svc.GetBucketAcl(&s3.GetBucketAclInput{
+		Bucket: aws.String(bucket),
+	})
 
-	fmt.Println("Buckets:")
+	fmt.Print(res, err)
 
-	for _, b := range result.Buckets {
-		fmt.Printf("* %s created on %s\n",
-			aws.StringValue(b.Name), aws.TimeValue(b.CreationDate))
-	}
-
-	resp, err := svc.ListObjects(&s3.ListObjectsInput{Bucket: aws.String("minin-bucket")})
-	if err != nil {
-	}
-
-	for _, item := range resp.Contents {
-		fmt.Println("Name:         ", *item.Key)
-		fmt.Println("Last modified:", *item.LastModified)
-		fmt.Println("Size:         ", *item.Size)
-		fmt.Println("Storage class:", *item.StorageClass)
-		fmt.Println("")
-	}
-	io.WriteString(w, "Hello bitch")
+	io.WriteString(w, "Hello ")
 }
 
 func main() {

@@ -16,8 +16,8 @@ const expire = 15 * time.Minute
 
 // PresignInput command for handler
 type PresignInput struct {
-	mimetype  string
-	directory string
+	mime string
+	key  string
 }
 
 // Presign create presign url
@@ -31,9 +31,9 @@ func Presign(com *PresignInput) (string, error) {
 
 	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
 		ACL:         aws.String("public-read"),
-		ContentType: aws.String(com.mimetype),
+		ContentType: aws.String(com.mime),
 		Bucket:      aws.String(bucket),
-		Key:         aws.String(com.directory + "/" + uuid.Must(uuid.NewV4()).String() + "." + com.mimetype[6:]),
+		Key:         aws.String(com.key + "/" + uuid.Must(uuid.NewV4()).String() + "." + com.mime[6:]),
 	})
 	return req.Presign(expire)
 }
