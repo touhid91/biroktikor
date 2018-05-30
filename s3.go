@@ -11,7 +11,7 @@ import (
 
 // TODO move to conf
 const region = "ap-northeast-1"
-const bucket = "minin-bucket"
+const bucket = "minin-image"
 const expire = 15 * time.Minute
 
 // PresignInput command for handler
@@ -30,7 +30,6 @@ func Presign(com *PresignInput) (string, error) {
 	svc := s3.New(ses)
 
 	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
-		ACL:         aws.String("public-read"),
 		ContentType: aws.String(com.mime),
 		Bucket:      aws.String(bucket),
 		Key:         aws.String(com.key + "/" + uuid.Must(uuid.NewV4()).String() + "." + com.mime[6:]),
