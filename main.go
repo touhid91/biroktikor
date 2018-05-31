@@ -1,59 +1,48 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-func enableCors(w *http.ResponseWriter) {
-	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-}
-
 func s3Handler(w http.ResponseWriter, r *http.Request) {
-	enableCors(&w)
-
-	command := PresignInput{
-		mime: r.FormValue("mime"),
-		key:  r.FormValue("key"),
+	if "POST" != r.Method {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		fmt.Fprintf(w, `{"error":%q}`, http.StatusText(http.StatusMethodNotAllowed))
+		return
 	}
 
-	if len(command.mime) < 1 {
-		io.WriteString(w, "param missing: mime")
-	}
-	fmt.Print(command)
+	w.Header().Set("Content-Type", "application/json")
 
-	url, err := Presign(&command)
+	defer r.Body.Close()
+
+	command := PresignInput{}
+	if err := json.NewDecoder(r.Body).Decode(&command); nil != err {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"error":%q}`, err)
+		return
+	}
+
+	// command.Meta.OwnerID = r.Context().Value("user").(*jwt.Token).Claims.(jwt.MapClaims)["id"].(float64)
+
+	reply, err := Presign(&command)
 	if nil != err {
-		fmt.Print(err)
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, `{"error":%q}`, err)
+		return
 	}
 
-	io.WriteString(w, url)
-}
-
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	ses, err := session.NewSession(&aws.Config{Region: aws.String(region)})
-	if err != nil {
+	mar, err := json.Marshal(reply)
+	if nil != err {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
-	svc := s3.New(ses)
-
-	res, _ := svc.GetBucketAcl(&s3.GetBucketAclInput{
-		Bucket: aws.String(bucket),
-	})
-
-	fmt.Print(res, err)
-
-	io.WriteString(w, "Hello ")
+	w.Write(mar)
 }
 
 func main() {
-	http.HandleFunc("/s3", s3Handler)
-	http.HandleFunc("/", helloHandler)
+	http.HandleFunc("/storage/s3", s3Handler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
