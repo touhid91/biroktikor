@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -36,8 +37,8 @@ func b64Enc(command map[string]string) string {
 // Sign creates signed url for s3
 func Sign(command *PresignInput) (*PresignOutput, error) {
 	var (
-		region = "ap-northeast-1"
-		bucket = "minin-image"
+		region = os.Getenv("AWS_REGION")
+		bucket = os.Getenv("AWS_BUCKET")
 		expire = 15 * time.Minute
 		dir    = "default"
 		id     = uuid.Must(uuid.NewV4()).String()
