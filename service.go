@@ -33,7 +33,7 @@ func Presign(command *PresignInput) (*PresignOutput, error) {
 	}
 
 	if "" != command.Meta.Title {
-		name = command.Meta.Title
+		// name = command.Meta.Title
 	}
 
 	owner := strconv.FormatFloat(command.Meta.OwnerID, 'f', 6, 64)
@@ -46,12 +46,7 @@ func Presign(command *PresignInput) (*PresignOutput, error) {
 	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
 		ContentType: aws.String(command.Mime),
 		Bucket:      aws.String(bucket),
-		Key:         aws.String(fmt.Sprintf("%s/%s.%s", dir, id, command.Mime[6:])),
-		Metadata: map[string]*string{
-			"created-on": aws.String(time.Now().UTC().Format(time.RFC3339)),
-			"created-by": aws.String(owner),
-			"title":      aws.String(name),
-		},
+		Key:         aws.String(fmt.Sprintf("%s/%s;%s;%s.%s", dir, owner, id, name, command.Mime[6:])),
 	})
 
 	url, perr := req.Presign(expire)

@@ -44,5 +44,5 @@ func s3Handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/storage/s3", s3Handler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8081", nil))
 }
