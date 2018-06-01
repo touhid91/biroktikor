@@ -8,13 +8,13 @@ import (
 )
 
 func s3Handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	if "POST" != r.Method {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		fmt.Fprintf(w, `{"error":%q}`, http.StatusText(http.StatusMethodNotAllowed))
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
 
 	defer r.Body.Close()
 
@@ -27,7 +27,7 @@ func s3Handler(w http.ResponseWriter, r *http.Request) {
 
 	// command.Meta.OwnerID = r.Context().Value("user").(*jwt.Token).Claims.(jwt.MapClaims)["id"].(float64)
 
-	reply, err := Presign(&command)
+	reply, err := Sign(&command)
 	if nil != err {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, `{"error":%q}`, err)
@@ -44,5 +44,5 @@ func s3Handler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/storage/s3", s3Handler)
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
